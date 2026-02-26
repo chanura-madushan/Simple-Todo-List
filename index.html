@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>To-Do List</title>
+  <link rel="stylesheet" href="todo-style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <div class="app">
+
+    <header>
+      <div class="header-top">
+        <h1>My Tasks</h1>
+        <div class="task-count">
+          <span id="count">0</span> left
+        </div>
+      </div>
+
+      <div class="filters">
+        <button class="filter-btn active" onclick="filterTasks('all', this)">All</button>
+        <button class="filter-btn" onclick="filterTasks('active', this)">Active</button>
+        <button class="filter-btn" onclick="filterTasks('done', this)">Done</button>
+      </div>
+    </header>
+
+    <div class="input-row">
+      <input type="text" id="taskInput" placeholder="Add a new task..." />
+      <button class="add-btn" onclick="addTask()">+</button>
+    </div>
+
+    <ul class="task-list" id="taskList">
+      <!-- tasks go here -->
+    </ul>
+
+    <footer>
+      <button class="clear-btn" onclick="clearCompleted()">Clear completed</button>
+    </footer>
+
+  </div>
+
+  <script>
+    let tasks = [];
+    let currentFilter = 'all';
+
+    function addTask() {
+      const input = document.getElementById('taskInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      tasks.push({ id: Date.now(), text, done: false });
+      input.value = '';
+      render();
+    }
+
+    function toggleTask(id) {
+      tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+      render();
+    }
+
+    function deleteTask(id) {
+      const li = document.querySelector(`[data-id="${id}"]`);
+      li.classList.add('removing');
+      setTimeout(() => {
+        tasks = tasks.filter(t => t.id !== id);
+        render();
+      }, 300);
+    }
+
+    function clearCompleted() {
+      tasks = tasks.filter(t => !t.done);
+      render();
+    }
+
+    function filterTasks(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    }
+
+    function render() {
+      const list = document.getElementById('taskList');
+      const remaining = tasks.filter(t => !t.done).length;
+      document.getElementById('count').textContent = remaining;
+
+      let filtered = tasks;
+      if (currentFilter === 'active') filtered = tasks.filter(t => !t.done);
+      if (currentFilter === 'done') filtered = tasks.filter(t => t.done);
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<li class="empty">No tasks here!</li>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(t => `
+        <li class="task-item ${t.done ? 'done' : ''}" data-id="${t.id}">
+          <button class="check-btn" onclick="toggleTask(${t.id})">
+            ${t.done ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+          </button>
+          <span class="task-text">${t.text}</span>
+          <button class="delete-btn" onclick="deleteTask(${t.id})">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </li>
+      `).join('');
+    }
+
+    // Add task on Enter key
+    document.getElementById('taskInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') addTask();
+    });
+
+    render();
+  </script>
+
+</body>
+</html>
